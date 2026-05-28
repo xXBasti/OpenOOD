@@ -48,6 +48,7 @@ parser.add_argument('--batch-size', type=int, default=200)
 parser.add_argument('--save-csv', action='store_true')
 parser.add_argument('--save-score', action='store_true')
 parser.add_argument('--fsood', action='store_true')
+parser.add_argument('--data-root', default="")
 parser.add_argument('--wrapper-net',
                     type=str,
                     default=None,
@@ -148,10 +149,15 @@ for subfolder in sorted(glob(os.path.join(root, 's*'))):
     net.cuda()
     net.eval()
 
+    if args.data_root == "":
+        data_root = os.path.join(ROOT_DIR, 'data')
+    else:
+        data_root = os.path.join(args.data_root)
+
     evaluator = Evaluator(
         net,
         id_name=args.id_data,  # the target ID dataset
-        data_root=os.path.join(ROOT_DIR, 'data'),
+        data_root=data_root,
         config_root=os.path.join(ROOT_DIR, 'configs'),
         preprocessor=None,  # default preprocessing
         postprocessor_name=postprocessor_name,

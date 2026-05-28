@@ -45,6 +45,7 @@ from .gen_postprocessor import GENPostprocessor
 from .relation_postprocessor import RelationPostprocessor
 from .grood import GrOODPostprocessor
 from .vra_postprocessor import VRAPostprocessor
+from .sisom_postprocessor import SisomPostprocessor
 
 
 def get_postprocessor(config: Config):
@@ -94,6 +95,8 @@ def get_postprocessor(config: Config):
         't2fnorm': T2FNormPostprocessor,
         'grood': GrOODPostprocessor,
         'vra': VRAPostprocessor,
+        'sisom': SisomPostprocessor,
+        'sisom_e': SisomPostprocessor,
     }
 
     return postprocessors[config.postprocessor.name](config)

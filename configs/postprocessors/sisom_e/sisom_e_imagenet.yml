@@ -1,0 +1,27 @@
+postprocessor:
+  name: sisom_e
+  APS_mode: False
+  search_sigmoid: False
+  postprocessor_args:
+    coverage_method: DSC
+    coverage_hyper: 0.75
+    num_classes: 1000
+    build_ratio: 0.1
+    dataset: imagenet
+    gain_mode: energy
+    surprise_strategy: energy
+    build_method: probcover
+    graph_radius: 10
+    input_size: [1, 3, 32, 32]
+    fixed_ratio: null
+  layer_kwargs:
+    AdaptiveAvgPool2d-1: 3000
+    Sequential-3: 300
+    Sequential-2: 0.01
+    Sequential-1: 1
+  postprocessor_sweep:
+    # cross
+    AdaptiveAvgPool2d-1: [0.1, 1, 10]
+    Sequential-3: [0.1, 1, 10]
+    Sequential-2: [0.1, 1, 10]
+    Sequential-1: [0.1, 1, 10]

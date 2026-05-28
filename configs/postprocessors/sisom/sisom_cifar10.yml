@@ -1,0 +1,27 @@
+postprocessor:
+  name: sisom
+  APS_mode: False
+  search_sigmoid: False
+  postprocessor_args:
+    coverage_method: DSC
+    coverage_hyper: 0.75
+    num_classes: 10
+    build_ratio: 0.1
+    dataset: cifar10
+    gain_mode: standard
+    surprise_strategy: surprise
+    build_method: probcover
+    graph_radius: 0.75
+    input_size : [1,3,32,32]
+    fixed_ratio: null
+  layer_kwargs:
+    AdaptiveAvgPool2d-1: 100
+    Sequential-3: 1000
+    Sequential-2: 0.001
+    Sequential-1: 0.001
+  postprocessor_sweep:
+    # cross
+    AdaptiveAvgPool2d-1: [1, 100, 1000]
+    Sequential-3: [1, 10, 1000]
+    Sequential-2: [0.001, 0.1, 1]
+    Sequential-1: [0.001, 0.1, 1]

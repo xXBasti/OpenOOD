@@ -16,8 +16,8 @@ from openood.postprocessors import (
     RMDSPostprocessor, SHEPostprocessor, CIDERPostprocessor, NPOSPostprocessor,
     GENPostprocessor, NNGuidePostprocessor, RelationPostprocessor,
     T2FNormPostprocessor, ReweightOODPostprocessor, fDBDPostprocessor,
-    AdaScalePostprocessor, IODINPostprocessor, NCIPostprocessor,CFOODPostprocessor,
-    VRAPostprocessor, GrOODPostprocessor)
+    AdaScalePostprocessor, IODINPostprocessor, NCIPostprocessor, CFOODPostprocessor,
+    VRAPostprocessor, GrOODPostprocessor, SisomPostprocessor)
 from openood.utils.config import Config, merge_configs
 
 postprocessors = {
@@ -73,6 +73,8 @@ postprocessors = {
     'grood': GrOODPostprocessor,
     'vra': VRAPostprocessor,
     'cfood': CFOODPostprocessor,
+    'sisom': SisomPostprocessor,
+    'sisom_e': SisomPostprocessor,
 }
 
 link_prefix = 'https://raw.githubusercontent.com/Jingkang50/OpenOOD/main/configs/postprocessors/'
@@ -80,8 +82,19 @@ link_prefix = 'https://raw.githubusercontent.com/Jingkang50/OpenOOD/main/configs
 
 def get_postprocessor(config_root: str, postprocessor_name: str,
                       id_data_name: str):
-    postprocessor_config_path = os.path.join(config_root, 'postprocessors',
-                                             f'{postprocessor_name}.yml')
+    # Support subdirectory-based configs (e.g., sisom/sisom_cifar10.yml)
+    subdir_config_path = os.path.join(
+        config_root, 'postprocessors', postprocessor_name,
+        f'{postprocessor_name}_{id_data_name}.yml')
+    flat_config_path = os.path.join(config_root, 'postprocessors',
+                                    f'{postprocessor_name}.yml')
+
+    if os.path.isdir(os.path.join(config_root, 'postprocessors',
+                                  postprocessor_name)):
+        postprocessor_config_path = subdir_config_path
+    else:
+        postprocessor_config_path = flat_config_path
+
     if not os.path.exists(postprocessor_config_path):
         os.makedirs(os.path.dirname(postprocessor_config_path), exist_ok=True)
         urllib.request.urlretrieve(
