@@ -38,7 +38,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--arch',
                     default='resnet50',
                     choices=['resnet50', 'swin-t', 'vit-b-16', 'regnet'])
-parser.add_argument('--tvs-version', default=1, choices=[1, 2])
+parser.add_argument('--tvs-version', default=1, type=int, choices=[1, 2])
 parser.add_argument('--ckpt-path', default=None)
 parser.add_argument('--tvs-pretrained', action='store_true')
 parser.add_argument('--postprocessor', default='msp')
@@ -46,9 +46,13 @@ parser.add_argument('--save-csv', action='store_true')
 parser.add_argument('--save-score', action='store_true')
 parser.add_argument('--fsood', action='store_true')
 parser.add_argument('--batch-size', default=200, type=int)
+parser.add_argument('--data-root', default=None)
+parser.add_argument('--root', default=None)
 args = parser.parse_args()
 
-if not args.tvs_pretrained:
+if args.root is not None:
+    root = args.root
+elif not args.tvs_pretrained:
     assert args.ckpt_path is not None
     root = '/'.join(args.ckpt_path.split('/')[:-1])
 else:
@@ -133,11 +137,14 @@ else:
 
 net.cuda()
 net.eval()
+
+data_root = args.data_root or os.path.join(ROOT_DIR, 'data')
+
 # a unified evaluator
 evaluator = Evaluator(
     net,
     id_name='imagenet',  # the target ID dataset
-    data_root=os.path.join(ROOT_DIR, 'data'),
+    data_root=data_root,
     config_root=os.path.join(ROOT_DIR, 'configs'),
     preprocessor=preprocessor,  # default preprocessing
     postprocessor_name=postprocessor_name,
