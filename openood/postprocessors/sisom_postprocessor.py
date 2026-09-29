@@ -2,23 +2,17 @@ import os
 from itertools import product
 from tqdm import tqdm
 
-from matplotlib import pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader, random_split
 import pandas as pd
-from sklearn.manifold import TSNE
 
 
 from .base_postprocessor import BasePostprocessor
 
-from .sisom import coverage_old as coverage
-
 from .sisom import tool
 from .sisom.coverage_al import DSC
-from .sisom.kcenterGreedy import kCenterGreedyOOD
 from .sisom.sampler import SubsetSequentialSampler
 from .sisom.prob_cover import RadiusGraphSelection
 
@@ -88,11 +82,6 @@ class SisomPostprocessor(BasePostprocessor):
         self.search_sigmoid = self.config.postprocessor.search_sigmoid
         self.root_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../')
 
-        # self.APS_mode = self.config.postprocessor.APS_mode
-
-        # self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-
 
     def setup(self, net: nn.Module, id_loader_dict, ood_loader_dict, **kwargs):
         """
@@ -121,20 +110,6 @@ class SisomPostprocessor(BasePostprocessor):
         total_samples = len(id_loader_dict["train"].dataset)
         
         # Building DataLoader with Pre-Selection Method (PC)
-        # # CoreSet Preseleciton
-        # if self.build_method == "coreset":
-        #     feat = self.get_features(net, id_loader_dict["train"], self.device).detach().cpu().numpy()
-        #     sampling = kCenterGreedyOOD(feat)
-        #     _ , batch = sampling.select_batch_(torch.tensor([]), int(self.build_ratio * total_samples - 1))
-        #     self.build_dataloader = DataLoader(id_loader_dict["train"].dataset,
-        #                                 batch_size=128, shuffle=False,
-        #                                 num_workers=8, pin_memory=True,
-        #                                 sampler=SubsetSequentialSampler(batch),
-        #                                 drop_last=False, collate_fn=self.collate_loader)
-        #     self.stat_dataloader = DataLoader(id_loader_dict["train"].dataset,
-        #                                 batch_size=128, shuffle=False,
-        #                                 num_workers=8, pin_memory=True,
-        #                                 drop_last=False)
         # RadiusGraph Preselection
         if self.build_method == "probcover":
             feat, labels = self.get_features(net, id_loader_dict["train"], self.device, return_labels=True)
@@ -149,7 +124,7 @@ class SisomPostprocessor(BasePostprocessor):
             self.stat_dataloader = DataLoader(id_loader_dict["train"].dataset,
                                         batch_size=128, shuffle=False,
                                         num_workers=8, pin_memory=True,
-                                        #sampler=SubsetSequentialSampler(aS),
+                                        sampler=SubsetSequentialSampler(aS),
                                         drop_last=False)
         # Random Preselection
         elif self.build_method == "sampled":
@@ -182,8 +157,7 @@ class SisomPostprocessor(BasePostprocessor):
         if self.search_sigmoid:
             self.search_optimal_sigmoids(layer_size_dict, net)
 
-        #self.coverage_obj : coverage.Coverage = getattr(coverage, self.coverage_method)(net, layer_size_dict, hyper = self.coverage_hyper, dataset=self.dataset, sigmoids = self.layer_kwargs)
-        self.coverage_obj: coverage.Coverage = DSC(net, layer_size_dict, hyper = self.coverage_hyper, dataset=self.dataset, sigmoids = self.layer_kwargs)
+        self.coverage_obj = DSC(net, layer_size_dict, hyper = self.coverage_hyper, dataset=self.dataset, sigmoids = self.layer_kwargs)
         self.coverage_obj.use = "OOD"
         self.coverage_obj.build(self.build_dataloader)
         self.gain_mean, self.gain_std, self.energy_mean, self.energy_std = self.calc_stats_from_train(self.stat_dataloader)
@@ -202,10 +176,10 @@ class SisomPostprocessor(BasePostprocessor):
         min_std = float("inf")
         print("Testing all sigmoid combinations")
         for sig_comb in tqdm(sig_combs):
-            self.coverage_obj: coverage.Coverage = getattr(coverage, self.coverage_method)(net, layer_size_dict,
-                                                                                           hyper=self.coverage_hyper,
-                                                                                           dataset=self.dataset,
-                                                                                           sigmoids=sig_comb)
+            self.coverage_obj = DSC(net, layer_size_dict,
+                                    hyper=self.coverage_hyper,
+                                    dataset=self.dataset,
+                                    sigmoids=sig_comb)
             self.coverage_obj.use = "OOD"
             self.coverage_obj.build(self.build_dataloader)
             gain_mean, gain_std, _, _ = self.calc_stats_from_train(self.stat_dataloader)
@@ -276,7 +250,6 @@ class SisomPostprocessor(BasePostprocessor):
                         drop_last=False)
         SA_batches = torch.tensor([])
         statistics = torch.tensor([])
-        print(self.fixed_ratio,self.gain_mean)
         for b in tqdm(data_loader):
             SA_batch = []
             data = b["data"]
@@ -298,11 +271,7 @@ class SisomPostprocessor(BasePostprocessor):
                     + max(1.0 - self.gain_mean, 0.0) * ((gain-self.gain_mean)/self.gain_std)
             else:
                 total_gain = (gain-self.gain_mean)/self.gain_std
-            # print(total_gain)
-            # total_gain = torch.sigmoid(total_gain)
-            # total_gain = 1-((total_gain+1.0)/2.0)
             total_gain = - total_gain
-            # print(total_gain)
 
             pred_list.append(layer_output_dict["Linear-1"].argmax(dim=1).cpu())
             if data_loader.batch_size == 1:

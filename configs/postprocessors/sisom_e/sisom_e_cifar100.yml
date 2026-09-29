@@ -6,14 +6,14 @@ postprocessor:
     coverage_method: DSC
     coverage_hyper: 0.75
     num_classes: 100
-    build_ratio: 0.1
+    build_ratio: 0.05
     dataset: cifar100
     gain_mode: energy
     surprise_strategy: energy
     build_method: probcover
     graph_radius: 5
     input_size : [1,3,32,32]
-    fixed_ratio: 0.2
+    fixed_ratio: 0.8
   layer_kwargs:
     AdaptiveAvgPool2d-1: 1
     Sequential-3: 0.1

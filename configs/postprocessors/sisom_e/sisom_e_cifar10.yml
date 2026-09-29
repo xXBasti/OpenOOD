@@ -6,12 +6,12 @@ postprocessor:
     coverage_method: DSC
     coverage_hyper: 0.75
     num_classes: 10
-    build_ratio: 0.1
+    build_ratio: 0.2
     dataset: cifar10
     gain_mode: energy
     surprise_strategy: energy
     build_method: probcover
-    graph_radius: 0.75
+    graph_radius: 0.7
     input_size : [1,3,32,32]
     fixed_ratio: null
   layer_kwargs:

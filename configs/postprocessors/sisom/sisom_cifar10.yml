@@ -10,7 +10,7 @@ postprocessor:
     dataset: cifar10
     gain_mode: standard
     surprise_strategy: surprise
-    build_method: probcover
+    build_method: random
     graph_radius: 0.75
     input_size : [1,3,32,32]
     fixed_ratio: null
